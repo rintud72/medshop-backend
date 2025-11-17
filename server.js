@@ -41,7 +41,7 @@ app.use(
 app.use(cors({
   origin: [
     "http://localhost:5173",                         // Local development frontend
-    "https://beautiful-pastelito-12df21.netlify.app" // Production frontend
+    "https://medshop-app.onrender.com" // Production frontend
   ],
   credentials: true
 }));
