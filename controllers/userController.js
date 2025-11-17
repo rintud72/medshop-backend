@@ -16,32 +16,63 @@ exports.registerUser = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
+
+    // ✅ ============= PORIBORTON SHURU ============= ✅
+    // লজিক পরিবর্তন করা হলো: ইউজার ভেরিফায়েড না হলে নতুন OTP পাঠানো হবে
+
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+      // Case 1: ইউজার আছে এবং ভেরিফায়েড
+      if (existingUser.isVerified) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+      }
+
+      // Case 2: ইউজার আছে কিন্তু ভেরিফায়েড নয় (আটকে যাওয়া ইউজার)
+      // আমরা নতুন OTP জেনারেট করে ইউজারকে আপডেট করবো
+      const otp = generateOTP(6);
+      const otpExpiry = Date.now() + 10 * 60 * 1000; // 10 মিনিট
+
+      existingUser.name = name;
+      existingUser.password = password; // pre('save') হুক স্বয়ংক্রিয়ভাবে হ্যাশ করবে
+      existingUser.phoneOtp = otp;
+      existingUser.otpExpiresAt = otpExpiry;
+
+      await existingUser.save(); // আপডেট করা ইউজার সেভ করা হলো
+      
+      console.log("TEST OTP (Resend):", otp);
+
+      // নতুন OTP ইমেইলে পাঠানো হচ্ছে
+      const subject = 'OTP Verification - Medicine Shop';
+      const text = `Hello ${name},\n\nYour NEW OTP for verification is: ${otp}\nThis OTP will expire in 10 minutes.\n\n- Medicine Shop`;
+      await sendEmail(email, subject, text);
+
+      return res.status(201).json({ message: 'OTP sent to your email. Please verify your account.' });
+
+    } else {
+      // Case 3: সম্পূর্ণ নতুন ইউজার
+      const otp = generateOTP(6);
+      const otpExpiry = Date.now() + 10 * 60 * 1000;
+
+      const newUser = new User({
+        name,
+        email,
+        password,
+        phoneOtp: otp,
+        otpExpiresAt: otpExpiry,
+        isVerified: false,
+      });
+
+      await newUser.save();
+      console.log("TEST OTP (New User):", otp);
+
+      // নতুন யூজারকে OTP পাঠানো হচ্ছে
+      const subject = 'OTP Verification - Medicine Shop';
+      const text = `Hello ${name},\n\nYour OTP for verification is: ${otp}\nThis OTP will expire in 10 minutes.\n\n- Medicine Shop`;
+      await sendEmail(email, subject, text);
+
+      return res.status(201).json({ message: 'OTP sent to your email. Please verify your account.' });
     }
+    // ✅ ============= PORIBORTON SHESH ============= ✅
 
-    // Generate OTP (6 digits) valid for 10 minutes
-    const otp = generateOTP(6);
-    const otpExpiry = Date.now() + 10 * 60 * 1000;
-
-    const newUser = new User({
-      name,
-      email,
-      password,
-      phoneOtp: otp,
-      otpExpiresAt: otpExpiry,
-      isVerified: false,
-    });
-
-    await newUser.save();
-    console.log("TEST OTP:", otp);
-
-    // improvement: Using centralized email function
-    const subject = 'OTP Verification - Medicine Shop';
-    const text = `Hello ${name},\n\nYour OTP for verification is: ${otp}\nThis OTP will expire in 10 minutes.\n\n- Medicine Shop`;
-    await sendEmail(email, subject, text);
-
-    res.status(201).json({ message: 'OTP sent to your email. Please verify your account.' });
   } catch (error) {
     console.error('Error registering user:', error);
     res.status(500).json({ message: 'Error registering user', error: error.message });
