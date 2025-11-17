@@ -1,4 +1,4 @@
-const SibApiV3Sdk = require('@brevo/client');
+const SibApiV3Sdk = require('@getbrevo/brevo'); // ✅ Poriborton: '@brevo/client' noy
 
 const sendEmail = async (to, subject, text) => {
   try {
@@ -11,12 +11,10 @@ const sendEmail = async (to, subject, text) => {
     let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
     sendSmtpEmail.subject = subject;
-    // Plain text-ke HTML-e rupantor kora jate line break-gulo thake
-    sendSmtpEmail.htmlContent = `<p>${text.replace(/\n/g, '<br>')}</p>`; 
-    
+    sendSmtpEmail.htmlContent = `<p>${text.replace(/\n/g, '<br>')}</p>`; // Text-ke HTML-e rupantor
     sendSmtpEmail.sender = { 
       name: "MedShop", 
-      email: process.env.BREVO_SENDER_EMAIL // Apnar Brevo-te verify kora email
+      email: process.env.BREVO_SENDER_EMAIL 
     };
     sendSmtpEmail.to = [{ email: to }];
 
