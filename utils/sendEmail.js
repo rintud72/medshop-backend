@@ -25,7 +25,7 @@ const sendEmail = async (to, subject, text) => {
 
   } catch (error) {
     // Brevo-r error-gulo aro bistarito dekhay
-    console.error('✘ Error sending email via Brevo:', error.response ? error.response.body : error.message);
+    console.error('✘ Error sending email via Brevo (Full Error):', error);
     throw new Error('Failed to send email');
   }
 };
