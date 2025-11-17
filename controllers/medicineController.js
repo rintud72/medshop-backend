@@ -9,8 +9,8 @@ exports.addMedicine = async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
 
-    // 👉 Image file path (only if uploaded)
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    // ✅ Poriborton: Shompurno URL save kora hocche
+    const image = req.file ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}` : null;
 
     // 👉 Validate required fields
     if (!name || !price || !description || !stock) {
@@ -122,8 +122,8 @@ exports.updateMedicine = async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
 
-    // 👉 If a new image is uploaded via multer, update image path
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    // ✅ Poriborton: Shompurno URL save kora hocche
+    const image = req.file ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}` : undefined;
 
     // 👉 Only update provided fields
     const updateFields = { name, price, description, stock };
