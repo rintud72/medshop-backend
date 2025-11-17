@@ -22,13 +22,15 @@ const sendEmail = async (to, subject, text) => {
      *   → "Less secure app access" is OFF for normal accounts
      *   → Or use "App Password" for accounts with 2-step verification
      */
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER, // Your Gmail address
-        pass: process.env.EMAIL_PASS, // App Password or Gmail password
-      },
-    });
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // SSL bebohar korbe
+  auth: {
+    user: process.env.EMAIL_USER, // Apnar email
+    pass: process.env.EMAIL_PASS, // Apnar Google App Password
+  },
+});
 
     /**
      * Send the actual email.
