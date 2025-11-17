@@ -1,58 +1,33 @@
-const nodemailer = require('nodemailer');
+const SibApiV3Sdk = require('@brevo/client');
 
-/**
- * sendEmail - A reusable utility function to send emails
- *
- * @param {string} to - Recipient's email address
- * @param {string} subject - Email subject line
- * @param {string} text - Email body text (plain text)
- *
- * This function centralizes email sending logic so that
- * all controllers can call this function instead of repeating nodemailer setup.
- */
 const sendEmail = async (to, subject, text) => {
   try {
+    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    
+    // API key-ti environment variable theke set kora
+    let apiKey = apiInstance.authentications['apiKey'];
+    apiKey.apiKey = process.env.BREVO_API_KEY;
 
-    /**
-     * Create a transporter using Gmail SMTP service.
-     * The user and pass are stored in environment variables for security.
-     * 
-     * IMPORTANT:
-     * For Gmail, make sure:
-     *   → "Less secure app access" is OFF for normal accounts
-     *   → Or use "App Password" for accounts with 2-step verification
-     */
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // SSL bebohar korbe
-  auth: {
-    user: process.env.EMAIL_USER, // Apnar email
-    pass: process.env.EMAIL_PASS, // Apnar Google App Password
-  },
-});
+    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-    /**
-     * Send the actual email.
-     * 'text' is plain text content.
-     * If you want formatted HTML emails, you can also use 'html' field.
-     */
-    await transporter.sendMail({
-      from: `"Medicine Shop" <${process.env.EMAIL_USER}>`, // Sender name + email
-      to: to,                                              // Recipient email
-      subject: subject,                                    // Email subject
-      text: text,                                          // Plain text content
-      // html: `<p>${text}</p>` // (optional) If you want HTML emails later
-    });
+    sendSmtpEmail.subject = subject;
+    // Plain text-ke HTML-e rupantor kora jate line break-gulo thake
+    sendSmtpEmail.htmlContent = `<p>${text.replace(/\n/g, '<br>')}</p>`; 
+    
+    sendSmtpEmail.sender = { 
+      name: "MedShop", 
+      email: process.env.BREVO_SENDER_EMAIL // Apnar Brevo-te verify kora email
+    };
+    sendSmtpEmail.to = [{ email: to }];
 
-    console.log(`✔ Email sent successfully to ${to}`);
+    // API call kore email pathano
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    
+    console.log(`✔ Email sent successfully to ${to} via Brevo`);
 
   } catch (error) {
-
-    // Display full error in terminal for debugging
-    console.error('✘ Error sending email:', error);
-
-    // Throw an error so the controller can handle it
+    // Brevo-r error-gulo aro bistarito dekhay
+    console.error('✘ Error sending email via Brevo:', error.response ? error.response.body : error.message);
     throw new Error('Failed to send email');
   }
 };
