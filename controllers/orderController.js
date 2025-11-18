@@ -6,50 +6,51 @@ const Medicine = require('../models/medicine'); // Import Medicine model
 // ===============================================
 exports.createOrder = async (req, res) => {
   try {
-    // Extracting values from request body
     const { medicineId, quantity, paymentMethod = 'COD', address } = req.body;
-
-    // Getting the logged-in user's ID from JWT payload
     const userId = req.user && (req.user.userId || req.user.id);
 
-    // If user is not logged in → Unauthorized
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    // Validating address fields (street and city are required)
     if (!address || !address.street || !address.city) {
       return res.status(400).json({ message: 'Address details are required' });
     }
 
-    // Fetching the selected medicine from database
     const medicine = await Medicine.findById(medicineId);
-
-    // If medicine doesn't exist → Not Found
     if (!medicine) return res.status(404).json({ message: 'Medicine not found' });
 
-    // Checking if requested quantity is available in stock
     if (medicine.stock < quantity) return res.status(400).json({ message: 'Not enough stock' });
 
-    // Creating a new order object (not saved yet)
-    const newOrder = new Order({
-      userId,                     // ID of the user who placed the order
-      medicineId,                 // Which medicine is ordered
-      quantity,                   // How many units
-      priceAtOrder: medicine.price, // Price saved at the time of order (prevents future price change issues)
-      address,                    // Delivery address
-      paymentMethod,              // Payment method (COD/online)
-      status: paymentMethod === 'COD' ? 'COD' : 'Pending' // COD = confirmed, others = pending
-    });
+    // ✅ স্ট্যাটাস লজিক
+    let initialOrderStatus = 'Processing';
+    let initialPaymentStatus = 'Pending';
 
-    // If payment method is COD, reduce the stock immediately
-    if (paymentMethod === 'COD') {
-      medicine.stock -= quantity; // Reduce stock
-      await medicine.save();      // Save updated stock
+    if (paymentMethod === 'ONLINE') {
+      initialOrderStatus = 'Pending'; // অনলাইন হলে পেমেন্ট না হওয়া পর্যন্ত অর্ডার পেন্ডিং থাকবে
+      initialPaymentStatus = 'Pending';
+    } else {
+      // COD হলে পেমেন্ট পেন্ডিং কিন্তু অর্ডার প্রসেসিং শুরু হবে
+      initialPaymentStatus = 'Pending'; 
+      initialOrderStatus = 'Processing';
     }
 
-    // Save the order in the database
+    const newOrder = new Order({
+      userId,
+      medicineId,
+      quantity,
+      priceAtOrder: medicine.price,
+      address,
+      paymentMethod,
+      orderStatus: initialOrderStatus,   // ✅
+      paymentStatus: initialPaymentStatus // ✅
+    });
+
+    if (paymentMethod === 'COD') {
+      medicine.stock -= quantity;
+      await medicine.save();
+    }
+
     await newOrder.save();
 
-    // Send success response
     res.status(201).json({
       message: 'Order placed successfully ✅',
       order: newOrder
@@ -57,7 +58,6 @@ exports.createOrder = async (req, res) => {
 
   } catch (error) {
     console.error('Error placing order:', error);
-    // Send server error response
     res.status(500).json({ message: 'Error placing order', error: error.message });
   }
 };
@@ -68,22 +68,14 @@ exports.createOrder = async (req, res) => {
 // ==================================================
 exports.getMyOrders = async (req, res) => {
   try {
-    // Get user ID from JWT token
     const userId = req.user && (req.user.userId || req.user.id);
-
-    // Check if user is authenticated
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    // Fetch all orders of this user
-    // populate() helps to fetch medicine name & price instead of just ID
     const orders = await Order.find({ userId }).populate('medicineId', 'name price');
-
-    // Return all user orders
     res.json({ orders });
 
   } catch (error) {
     console.error('Error getting orders:', error);
-    // Error response
     res.status(500).json({ message: 'Error getting orders', error: error.message });
   }
 };
