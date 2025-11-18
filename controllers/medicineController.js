@@ -9,37 +9,55 @@ exports.addMedicine = async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
 
-    // ✅ Poriborton: Shompurno URL save kora hocche
-    const image = req.file ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}` : null;
+    let image = null;
 
-    // 👉 Validate required fields
-    if (!name || !price || !description || !stock) {
-      return res.status(400).json({ message: "All fields are required." });
+    // 🔹 If image uploaded → upload to Supabase
+    if (req.file) {
+      const file = req.file;
+      const fileName = Date.now() + "-" + file.originalname;
+
+      // Upload to Supabase bucket
+      const { data, error } = await supabase.storage
+        .from("medicines")
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+        });
+
+      if (error) {
+        console.log("Upload error:", error);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+
+      // Public URL
+      const { data: publicUrl } = supabase.storage
+        .from("medicines")
+        .getPublicUrl(fileName);
+
+      image = publicUrl.publicUrl;
     }
 
-    // 👉 Create a new medicine document
+    if (!name || !price || !description || !stock) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
     const newMedicine = new Medicine({
       name,
       price,
       description,
       stock,
-      image,
+      image
     });
 
-    // 👉 Save to database
     await newMedicine.save();
 
     res.status(201).json({
-      message: "Medicine added successfully ✅",
+      message: "Medicine added successfully",
       medicine: newMedicine,
     });
 
   } catch (error) {
     console.error("Error adding medicine:", error);
-    res.status(500).json({
-      message: "Failed to add medicine",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to add medicine" });
   }
 };
 
@@ -122,18 +140,35 @@ exports.updateMedicine = async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
 
-    // ✅ Poriborton: Shompurno URL save kora hocche
-    const image = req.file ? `${process.env.BACKEND_URL}/uploads/${req.file.filename}` : undefined;
+    let updateFields = { name, price, description, stock };
 
-    // 👉 Only update provided fields
-    const updateFields = { name, price, description, stock };
-    if (image) updateFields.image = image;
+    // 🔹 If new image uploaded → upload to Supabase
+    if (req.file) {
+      const file = req.file;
+      const fileName = Date.now() + "-" + file.originalname;
 
-    // 👉 Update and return the updated record
+      const { data, error } = await supabase.storage
+        .from("medicines")
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+        });
+
+      if (error) {
+        console.log("Upload error:", error);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+
+      const { data: publicUrl } = supabase.storage
+        .from("medicines")
+        .getPublicUrl(fileName);
+
+      updateFields.image = publicUrl.publicUrl;
+    }
+
     const updatedMedicine = await Medicine.findByIdAndUpdate(
       req.params.id,
       updateFields,
-      { new: true, runValidators: true } // return updated document + validation enabled
+      { new: true, runValidators: true }
     );
 
     if (!updatedMedicine) {
@@ -141,18 +176,16 @@ exports.updateMedicine = async (req, res) => {
     }
 
     res.json({
-      message: "Medicine updated successfully ✅",
+      message: "Medicine updated successfully",
       medicine: updatedMedicine,
     });
 
   } catch (error) {
     console.error("Error updating medicine:", error);
-    res.status(500).json({
-      message: "Failed to update medicine",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to update medicine" });
   }
 };
+
 
 
 
