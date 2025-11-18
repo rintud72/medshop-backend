@@ -13,7 +13,8 @@ const supabase = createClient(
 // ======================================================================
 exports.addMedicine = async (req, res) => {
   try {
-    const { name, price, description, stock } = req.body;
+    // ✅ category যোগ করা হলো
+    const { name, price, description, stock, category } = req.body;
 
     let image = null;
 
@@ -51,6 +52,7 @@ exports.addMedicine = async (req, res) => {
       price,
       description,
       stock,
+      category, // ✅ ডাটাবেসে সেভ করার সময় category যোগ করা হলো
       image
     });
 
@@ -144,9 +146,11 @@ exports.getMedicineById = async (req, res) => {
 // ======================================================================
 exports.updateMedicine = async (req, res) => {
   try {
-    const { name, price, description, stock } = req.body;
+    // ✅ category যোগ করা হলো
+    const { name, price, description, stock, category } = req.body;
 
-    let updateFields = { name, price, description, stock };
+    // ✅ আপডেট ফিল্ডসে category যোগ করা হলো
+    let updateFields = { name, price, description, stock, category };
 
     // 🔹 If new image uploaded → upload to Supabase
     if (req.file) {
