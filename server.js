@@ -27,6 +27,20 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+
+// --------------------------------------------------------
+// 🌐 CORS Configuration
+// --------------------------------------------------------
+// CORS allows your frontend (React/Vite/Netlify) to access the API.
+// `credentials: true` lets cookies and headers pass securely.
+//
+app.use(cors({
+  origin: [
+    "http://localhost:5173",                         // Local development frontend
+    "https://medshop-app.onrender.com" // Production frontend
+  ],
+  credentials: true
+}));
 // --------------------------------------------------------
 // 🔐 Helmet Middleware (Security)
 // --------------------------------------------------------
@@ -42,19 +56,7 @@ app.use(
 );
 
 
-// --------------------------------------------------------
-// 🌐 CORS Configuration
-// --------------------------------------------------------
-// CORS allows your frontend (React/Vite/Netlify) to access the API.
-// `credentials: true` lets cookies and headers pass securely.
-//
-app.use(cors({
-  origin: [
-    "http://localhost:5173",                         // Local development frontend
-    "https://medshop-app.onrender.com" // Production frontend
-  ],
-  credentials: true
-}));
+
 
 
 // --------------------------------------------------------
