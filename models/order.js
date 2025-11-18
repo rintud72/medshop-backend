@@ -16,18 +16,20 @@ const orderSchema = new mongoose.Schema({
   // Payment method selected by the user
   paymentMethod: { type: String, enum: ['COD', 'ONLINE'], default: 'COD' },
 
-  // ✅ 1. আলাদা অর্ডার স্ট্যাটাস (ডেলিভারি সংক্রান্ত)
-  orderStatus: { 
+  // Current order status
+  status: { 
     type: String, 
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'], 
-    default: 'Processing' 
-  },
-
-  // ✅ 2. আলাদা পেমেন্ট স্ট্যাটাস (টাকা সংক্রান্ত)
-  paymentStatus: {
-    type: String,
-    enum: ['Pending', 'Paid', 'Failed'],
-    default: 'Pending'
+    enum: [
+      'Pending',     // Waiting for payment (only for online payments)
+      'Paid',        // Payment successful (online)
+      'COD',         // Cash on Delivery (order placed)
+      'Processing',  // Order is being prepared/packed
+      'Shipped',     // Order has been shipped
+      'Delivered',   // Order delivered successfully
+      'Cancelled',   // Order has been cancelled
+      'Failed'       // Payment failed
+    ], 
+    default: 'Pending' 
   },
 
   // Payment ID (from online payment gateway)
