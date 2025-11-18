@@ -1,5 +1,11 @@
 const Medicine = require("../models/medicine");
+const { createClient } = require("@supabase/supabase-js");
 
+// 🔹 Supabase client init (এই ফাইলেও লাগবে)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // ======================================================================
 // ✅ Add Medicine (with image upload)
