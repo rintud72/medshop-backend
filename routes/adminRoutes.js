@@ -7,23 +7,21 @@ const adminAuth = require("../middleware/adminAuth");
 const {
   getAllUsers,
   deleteUser,
+  updateUser, // ✅ Imported updateUser
   getAllOrders,
   updateOrderStatus,
-  getDashboardStats // ✅ 1. Imported the new dashboard function
+  getDashboardStats
 } = require("../controllers/adminController");
 
 // -------------------------------------------------------------
 // 👑 Admin Protected Routes
-// All routes here require:
-// 1. Valid JWT token
-// 2. User must have ADMIN role
 // -------------------------------------------------------------
 
-// ✅ 2. Dashboard stats route added
 router.get("/dashboard", authenticateToken, adminAuth, getDashboardStats);
 
 // ---------------------- User Management ----------------------
 router.get("/users", authenticateToken, adminAuth, getAllUsers);
+router.put("/users/:id", authenticateToken, adminAuth, updateUser); // ✅ Added Update Route
 router.delete("/users/:id", authenticateToken, adminAuth, deleteUser);
 
 // ---------------------- Order Management ---------------------

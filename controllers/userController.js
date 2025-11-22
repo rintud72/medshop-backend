@@ -6,11 +6,12 @@ const sendEmail = require('../utils/sendEmail');
 
 // =======================
 // 🧾 REGISTER USER + SEND OTP
-// (আগের সঠিক কোডটি এখানে আছে)
+// (আপডেট করা হয়েছে: এখন role ইনপুট নেওয়া হবে)
 // =======================
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    // ✅ আপডেট: role ডি-স্ট্রাকচার করা হলো
+    const { name, email, password, role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
@@ -32,6 +33,7 @@ exports.registerUser = async (req, res) => {
       existingUser.password = password; 
       existingUser.phoneOtp = otp;
       existingUser.otpExpiresAt = otpExpiry;
+      // বিদ্যমান আনভেরিফাইড ইউজারের রোলও আপডেট চাইলে এখানে existingUser.role = role || 'USER'; যোগ করতে পারেন
 
       await existingUser.save();       
       console.log("TEST OTP (Resend):", otp);
@@ -54,6 +56,8 @@ exports.registerUser = async (req, res) => {
         phoneOtp: otp,
         otpExpiresAt: otpExpiry,
         isVerified: false,
+        // ✅ আপডেট: role সেট করা হলো (ডিফল্ট 'USER')
+        role: role || 'USER'
       });
 
       await newUser.save();
@@ -102,7 +106,6 @@ exports.verifyOtp = async (req, res) => {
 
 // =======================
 // 🔓 LOGIN USER
-// ✅✅✅ আপনার চাহিদা অনুযায়ী এই ফাংশনটি পরিবর্তন করা হলো
 // =======================
 exports.loginUser = async (req, res) => {
   try {
@@ -114,14 +117,10 @@ exports.loginUser = async (req, res) => {
 
     const user = await User.findOne({ email }).select('+password');
     
-    // ✅ নতুন পরিবর্তন:
-    // যদি ইউজার না থাকে (null) অথবা ইউজার ভেরিফায়েড না হয় (!user.isVerified)
-    // উভয় ক্ষেত্রেই "Not registered" মেসেজ পাঠানো হবে
     if (!user || !user.isVerified) {
       return res.status(404).json({ message: 'User not registered. Register first.' });
     }
 
-    // ইউজার ভেরিফায়েড, এখন পাসওয়ার্ড চেক করা হচ্ছে
     const isMatch = await user.matchPassword(password);
     
     if (!isMatch) {

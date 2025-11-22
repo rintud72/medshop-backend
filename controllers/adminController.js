@@ -5,10 +5,6 @@ const Medicine = require("../models/medicine");
 // =====================================================
 // 👥 Get all users
 // =====================================================
-/*
-  This function fetches all users from the database.
-  Sensitive fields like password, OTP, and OTP expiry are removed before sending.
-*/
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password -phoneOtp -otpExpiresAt");
@@ -27,12 +23,32 @@ exports.getAllUsers = async (req, res) => {
 };
 
 // =====================================================
+// ✏️ Update user (Admin)
+// =====================================================
+exports.updateUser = async (req, res) => {
+  try {
+    const { name, email, role, isVerified } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { name, email, role, isVerified },
+      { new: true, runValidators: true }
+    ).select("-password -phoneOtp -otpExpiresAt");
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Error updating user", error: error.message });
+  }
+};
+
+// =====================================================
 // ❌ Delete user by ID
 // =====================================================
-/*
-  Deletes a user by their ID.
-  If user doesn't exist → return 404.
-*/
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -52,15 +68,11 @@ exports.deleteUser = async (req, res) => {
 // =====================================================
 // 📦 Get all orders
 // =====================================================
-/*
-  Fetches all orders.
-  Populates user & medicine info for better readability.
-*/
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate("userId", "name email")      // add user info
-      .populate("medicineId", "name price"); // add medicine info
+      .populate("userId", "name email")
+      .populate("medicineId", "name price");
 
     res.json({
       total: orders.length,
@@ -78,10 +90,6 @@ exports.getAllOrders = async (req, res) => {
 // =====================================================
 // 🔁 Update order status
 // =====================================================
-/*
-  Updates the status of an order (e.g., Pending → Delivered).
-  The updated order is returned with user details.
-*/
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -89,7 +97,7 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true } // return updated document
+      { new: true }
     ).populate("userId", "name email");
 
     if (!order)
@@ -110,26 +118,13 @@ exports.updateOrderStatus = async (req, res) => {
 // =====================================================
 // 📊 Dashboard Stats (Admin)
 // =====================================================
-/*
-  Provides admin dashboard analytics:
-  1. Total users (excluding admin)
-  2. Total orders (Paid + COD)
-  3. Total revenue (quantity × priceAtOrder)
-  4. Low-stock medicines
-  5. Total medicine types
-  6. Total stock (sum of all medicine stock)
-*/
 exports.getDashboardStats = async (req, res) => {
   try {
-    // 1. Total number of users (excluding admin)
     const totalUsers = await User.countDocuments({ role: "USER" });
-
-    // 2. Total number of completed orders
     const totalOrders = await Order.countDocuments({
       status: { $in: ["Paid", "COD"] },
     });
 
-    // 3. Total revenue using MongoDB aggregation
     const revenueData = await Order.aggregate([
       {
         $match: {
@@ -145,18 +140,14 @@ exports.getDashboardStats = async (req, res) => {
         },
       },
     ]);
-    const totalRevenue =
-      revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
+    const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
 
-    // 4. Medicines with low stock (<10)
     const lowStockMedicines = await Medicine.find({ stock: { $lt: 10 } })
       .select("name stock")
       .limit(5);
 
-    // 5. Count total types of medicines
     const totalMedicines = await Medicine.countDocuments();
 
-    // 6. Calculate total available stock using aggregation
     const stockData = await Medicine.aggregate([
       {
         $group: {
@@ -165,10 +156,8 @@ exports.getDashboardStats = async (req, res) => {
         },
       },
     ]);
-    const totalStock =
-      stockData.length > 0 ? stockData[0].totalStock : 0;
+    const totalStock = stockData.length > 0 ? stockData[0].totalStock : 0;
 
-    // Send all dashboard stats together
     res.json({
       totalUsers,
       totalOrders,
