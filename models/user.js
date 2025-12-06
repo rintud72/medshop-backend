@@ -32,7 +32,10 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['USER', 'ADMIN'], default: 'USER' },
   
   // ✅ Array of saved addresses for the user
-  addresses: [addressSchema]
+  addresses: [addressSchema],
+
+  // ✅ Wishlist ekhane add kora holo (Schema-r bhetore)
+  wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Medicine' }]
 });
 
 // -------------------------------------------------------------

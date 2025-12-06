@@ -14,7 +14,10 @@ const {
   getAddresses,
   addAddress,
   deleteAddress,
-  changePassword
+  changePassword,
+  // ✅ Wishlist controller function-gulo import kora holo
+  toggleWishlist,
+  getWishlist
 } = require('../controllers/userController');
 
 
@@ -82,6 +85,16 @@ router.delete('/profile/addresses/:addressId', authenticateToken, deleteAddress)
 // 📌 Change password from profile (requires current password)
 router.put('/profile/change-password', authenticateToken, changePassword);
 
+
+// ============================================================================
+// ❤️ WISHLIST ROUTES (New Added)
+// ============================================================================
+
+// 📌 Toggle Wishlist (Add or Remove item)
+router.post('/wishlist/toggle', authenticateToken, toggleWishlist);
+
+// 📌 Get User's Wishlist
+router.get('/wishlist', authenticateToken, getWishlist);
 
 
 module.exports = router;

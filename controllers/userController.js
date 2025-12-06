@@ -1,4 +1,6 @@
 const User = require('../models/user');
+// ✅ Medicine মডেল ইম্পোর্ট করা হলো (Wishlist পপুলেট করার জন্য বা চেক করার জন্য লাগতে পারে)
+const Medicine = require('../models/medicine'); 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const generateOTP = require('../utils/otpgenerator');
@@ -371,5 +373,54 @@ exports.changePassword = async (req, res) => {
   } catch (error) {
     console.error("Error changing password:", error);
     res.status(500).json({ message: "Error changing password", error: error.message });
+  }
+};
+
+
+// =======================
+// ❤️ TOGGLE WISHLIST (Add/Remove)
+// =======================
+exports.toggleWishlist = async (req, res) => {
+  try {
+    const { medicineId } = req.body;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // চেক করা হচ্ছে মেডিসিনটি ইতিমধ্যে উইশলিস্টে আছে কিনা
+    const index = user.wishlist.indexOf(medicineId);
+
+    if (index === -1) {
+      // নেই, তাই যোগ করুন
+      user.wishlist.push(medicineId);
+      await user.save();
+      res.json({ message: "Added to wishlist", wishlist: user.wishlist });
+    } else {
+      // আছে, তাই সরিয়ে ফেলুন
+      user.wishlist.splice(index, 1);
+      await user.save();
+      res.json({ message: "Removed from wishlist", wishlist: user.wishlist });
+    }
+  } catch (error) {
+    console.error("Wishlist error:", error);
+    res.status(500).json({ message: "Error updating wishlist" });
+  }
+};
+
+
+// =======================
+// 📜 GET WISHLIST
+// =======================
+exports.getWishlist = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    // populate() ব্যবহার করে medicineId থেকে মেডিসিনের নাম, দাম, ছবি নিয়ে আসা হচ্ছে
+    const user = await User.findById(userId).populate('wishlist'); 
+    
+    res.json({ wishlist: user.wishlist });
+  } catch (error) {
+    console.error("Get wishlist error:", error);
+    res.status(500).json({ message: "Error fetching wishlist" });
   }
 };
