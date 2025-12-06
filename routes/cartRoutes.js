@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/authenticateToken');
+const upload = require('../middleware/uploadImage'); // ✅ ইমেজ আপলোড মিডলওয়্যার ইম্পোর্ট
 
 const {
   getCartItems,
@@ -17,25 +18,21 @@ const {
 // -------------------------------------------------------------
 
 // GET /api/cart
-// (From Vite → /api/orders/cart)
 router.get('/', authenticateToken, getCartItems);
 
 // POST /api/cart/add
-// (From Vite → /api/orders/add-to-cart)
 router.post('/add', authenticateToken, addToCart);
 
 // DELETE /api/cart/remove/:id
-// (From Vite → /api/orders/remove-from-cart/:id)
 router.delete('/remove/:id', authenticateToken, removeFromCart);
 
 // POST /api/cart/checkout
-// (From Vite → /api/orders/checkout)
-router.post('/checkout', authenticateToken, checkout);
+// ✅ চেকআউট রাউটে ইমেজ আপলোড যুক্ত করা হলো
+router.post('/checkout', authenticateToken, upload.single('prescription'), checkout);
 
 
 // -------------------------------------------------------------
 // 🧪 Debugging Route
-// This helps verify whether the cart routes file is working correctly.
 // -------------------------------------------------------------
 router.get('/test', (req, res) => {
   console.log("✅✅✅ TEST ROUTE HIT — Cart routes file is working! ✅✅✅");

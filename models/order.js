@@ -35,6 +35,9 @@ const orderSchema = new mongoose.Schema({
   // Payment ID (from online payment gateway)
   paymentId: { type: String },
 
+  // ✅ Prescription Image URL (নতুন ফিল্ড)
+  prescription: { type: String },
+
   // Delivery address details
   address: {
     street: { type: String },
