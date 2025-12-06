@@ -144,6 +144,8 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        wishlist: user.wishlist, // ✅ এই লাইনটি যোগ করা হলো
+        addresses: user.addresses
       },
     });
   } catch (error) {
