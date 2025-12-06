@@ -15,7 +15,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require("./routes/adminRoutes");
 const cartRoutes = require('./routes/cartRoutes'); 
-
+const reviewRoutes = require('./routes/reviewRoutes');
 
 
 
@@ -79,7 +79,7 @@ app.use('/api/orders', orderRoutes);       // User order routes
 app.use('/api/payments', paymentRoutes);   // Payment (Stripe/Razorpay) routes
 app.use("/api/admin", adminRoutes);        // Admin authentication + dashboard routes
 app.use('/api/cart', cartRoutes);          // User cart routes
-
+app.use('/api/reviews', reviewRoutes);
 
 // --------------------------------------------------------
 // 🖼️ Static File Serving (Uploads Folder)
